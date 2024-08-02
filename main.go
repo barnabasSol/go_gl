@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"path/filepath"
 
 	"github.com/barnabasSol/go_gl/helper"
@@ -12,9 +13,9 @@ const winWidth = 1280
 const winHeight = 730
 
 func main() {
-	sdl_err := sdl.Init(sdl.INIT_EVERYTHING)
-	if sdl_err != nil {
-		panic(sdl_err)
+	err := sdl.Init(sdl.INIT_EVERYTHING)
+	if err != nil {
+		panic(err)
 	}
 
 	defer sdl.Quit()
@@ -39,27 +40,40 @@ func main() {
 	defer window.Destroy()
 	gl.Init()
 
-	// fmt.Println(helper.GetVersion())
+	fmt.Println(helper.GetVersion())
 
-	vertexShaderPath := filepath.Join("shaders", "triangle.vert")
-	fragmentShaderPath := filepath.Join("shaders", "triangle.frag")
+	vertexShaderPath := filepath.Join("shaders", "first.vert")
+	fragmentShaderPath := filepath.Join("shaders", "quad_tex.frag")
 
-	shader_program, err := helper.CreateProgram(vertexShaderPath, fragmentShaderPath)
+	shader_program, err := helper.NewShader(vertexShaderPath, fragmentShaderPath)
 	if err != nil {
 		panic(err)
 	}
+	tex_file_path := filepath.Join("assets", "wall.jpg")
+	texture := helper.LoadTextureAlpha(tex_file_path)
 
 	vertices := []float32{
-		-0.5, -0.5, 0.0,
-		0.5, -0.5, 0.0,
-		0.0, 0.5, 0.0,
+		0.5, 0.5, 0.0, 1.0, 1.0,
+		0.5, -0.5, 0.0, 1.0, 0.0,
+		-0.5, -0.5, 0.0, 0.0, 0.0,
+		-0.5, 0.5, 0.0, 0.0, 1.0,
+	}
+
+	indices := []uint32{
+		0, 1, 3,
+		1, 2, 3,
 	}
 
 	helper.GenBindBuffer(gl.ARRAY_BUFFER, 1)
 	VAO := helper.GenBindVertexArray(1)
+	helper.GenBindBuffer(gl.ELEMENT_ARRAY_BUFFER, 1)
+	helper.BufferDataInt(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW)
+
 	helper.BufferDataFloat(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW)
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 3*4, nil)
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 5*4, nil)
 	gl.EnableVertexAttribArray(0)
+	gl.VertexAttribPointerWithOffset(1, 2, gl.FLOAT, false, 5*4, 3*4)
+	gl.EnableVertexAttribArray(1)
 	helper.UnbindVertexArray()
 
 	for {
@@ -72,11 +86,13 @@ func main() {
 		gl.ClearColor(0.0, 0.0, 0.0, 0.0)
 		gl.Clear(gl.COLOR_BUFFER_BIT)
 
-		helper.UseProgram(shader_program)
+		shader_program.Use()
+		helper.BindTexture(texture)
+
 		helper.BindVertextArray(VAO)
 
-		gl.DrawArrays(gl.TRIANGLES, 0, 3)
+		gl.DrawElementsWithOffset(gl.TRIANGLES, 6, gl.UNSIGNED_INT, 0)
 		window.GLSwap()
-		// helper.CheckForShaderChanges()
+		shader_program.CheckForShaderChanges()
 	}
 }
