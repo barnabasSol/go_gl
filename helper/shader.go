@@ -2,6 +2,8 @@ package helper
 
 import (
 	"time"
+
+	"github.com/go-gl/gl/v3.3-core/gl"
 )
 
 type Shader struct {
@@ -31,4 +33,10 @@ func NewShader(vert_path string, frag_path string) (*Shader, error) {
 
 func (shader *Shader) Use() {
 	UseProgram(shader.id)
+}
+
+func (shader *Shader) SetFloat(name string, f float32) {
+	name_cstr := gl.Str(name + "\x00")
+	location := gl.GetUniformLocation(uint32(shader.id), name_cstr)
+	gl.Uniform1f(location, f)
 }

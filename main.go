@@ -53,21 +53,58 @@ func main() {
 	texture := helper.LoadTextureAlpha(tex_file_path)
 
 	vertices := []float32{
-		0.5, 0.5, 0.0, 1.0, 1.0,
-		0.5, -0.5, 0.0, 1.0, 0.0,
-		-0.5, -0.5, 0.0, 0.0, 0.0,
-		-0.5, 0.5, 0.0, 0.0, 1.0,
+		-0.5, -0.5, -0.5, 0.0, 0.0,
+		0.5, -0.5, -0.5, 1.0, 0.0,
+		0.5, 0.5, -0.5, 1.0, 1.0,
+		0.5, 0.5, -0.5, 1.0, 1.0,
+		-0.5, 0.5, -0.5, 0.0, 1.0,
+		-0.5, -0.5, -0.5, 0.0, 0.0,
+
+		-0.5, -0.5, 0.5, 0.0, 0.0,
+		0.5, -0.5, 0.5, 1.0, 0.0,
+		0.5, 0.5, 0.5, 1.0, 1.0,
+		0.5, 0.5, 0.5, 1.0, 1.0,
+		-0.5, 0.5, 0.5, 0.0, 1.0,
+		-0.5, -0.5, 0.5, 0.0, 0.0,
+
+		-0.5, 0.5, 0.5, 1.0, 0.0,
+		-0.5, 0.5, -0.5, 1.0, 1.0,
+		-0.5, -0.5, -0.5, 0.0, 1.0,
+		-0.5, -0.5, -0.5, 0.0, 1.0,
+		-0.5, -0.5, 0.5, 0.0, 0.0,
+		-0.5, 0.5, 0.5, 1.0, 0.0,
+
+		0.5, 0.5, 0.5, 1.0, 0.0,
+		0.5, 0.5, -0.5, 1.0, 1.0,
+		0.5, -0.5, -0.5, 0.0, 1.0,
+		0.5, -0.5, -0.5, 0.0, 1.0,
+		0.5, -0.5, 0.5, 0.0, 0.0,
+		0.5, 0.5, 0.5, 1.0, 0.0,
+
+		-0.5, -0.5, -0.5, 0.0, 1.0,
+		0.5, -0.5, -0.5, 1.0, 1.0,
+		0.5, -0.5, 0.5, 1.0, 0.0,
+		0.5, -0.5, 0.5, 1.0, 0.0,
+		-0.5, -0.5, 0.5, 0.0, 0.0,
+		-0.5, -0.5, -0.5, 0.0, 1.0,
+
+		-0.5, 0.5, -0.5, 0.0, 1.0,
+		0.5, 0.5, -0.5, 1.0, 1.0,
+		0.5, 0.5, 0.5, 1.0, 0.0,
+		0.5, 0.5, 0.5, 1.0, 0.0,
+		-0.5, 0.5, 0.5, 0.0, 0.0,
+		-0.5, 0.5, -0.5, 0.0, 1.0,
 	}
 
-	indices := []uint32{
-		0, 1, 3,
-		1, 2, 3,
-	}
+	// indices := []uint32{
+	// 	0, 1, 3,
+	// 	1, 2, 3,
+	// }
 
 	helper.GenBindBuffer(gl.ARRAY_BUFFER, 1)
 	VAO := helper.GenBindVertexArray(1)
-	helper.GenBindBuffer(gl.ELEMENT_ARRAY_BUFFER, 1)
-	helper.BufferDataInt(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW)
+	// helper.GenBindBuffer(gl.ELEMENT_ARRAY_BUFFER, 1)
+	// helper.BufferDataInt(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW)
 
 	helper.BufferDataFloat(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW)
 	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 5*4, nil)
@@ -76,23 +113,34 @@ func main() {
 	gl.EnableVertexAttribArray(1)
 	helper.UnbindVertexArray()
 
+	var x float32 = 0.0
+	//for vertex shader
+	var xv float32 = 0.0
+	var yv float32 = 0.0
+
 	for {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 			switch event.(type) {
 			case *sdl.QuitEvent:
 				return
+				// case *sdl.KeyboardEvent:
 			}
+			gl.ClearColor(0.0, 0.0, 0.0, 0.0)
+			gl.Clear(gl.COLOR_BUFFER_BIT)
+			helper.HandleInput(&xv, &yv)
+			shader_program.Use()
+			shader_program.SetFloat("x", x)
+			shader_program.SetFloat("y", 0.0)
+			shader_program.SetFloat("xv", xv)
+			shader_program.SetFloat("yv", yv)
+			helper.BindTexture(texture)
+
+			helper.BindVertextArray(VAO)
+
+			gl.DrawArrays(gl.TRIANGLES, 0, 36)
+			window.GLSwap()
+			shader_program.CheckForShaderChanges()
+
 		}
-		gl.ClearColor(0.0, 0.0, 0.0, 0.0)
-		gl.Clear(gl.COLOR_BUFFER_BIT)
-
-		shader_program.Use()
-		helper.BindTexture(texture)
-
-		helper.BindVertextArray(VAO)
-
-		gl.DrawElementsWithOffset(gl.TRIANGLES, 6, gl.UNSIGNED_INT, 0)
-		window.GLSwap()
-		shader_program.CheckForShaderChanges()
 	}
 }
