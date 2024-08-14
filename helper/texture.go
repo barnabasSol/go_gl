@@ -1,7 +1,7 @@
 package helper
 
 import (
-	"image/png"
+	"image/jpeg"
 	"os"
 
 	"github.com/go-gl/gl/v3.3-core/gl"
@@ -13,7 +13,7 @@ func LoadTextureAlpha(file_path string) TextureId {
 		panic(os_err)
 	}
 	defer infile.Close()
-	img, jpg_err := png.Decode(infile)
+	img, jpg_err := jpeg.Decode(infile)
 	if jpg_err != nil {
 		panic(jpg_err)
 	}
