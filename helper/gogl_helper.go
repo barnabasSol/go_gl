@@ -59,7 +59,7 @@ func CreateProgram(vert_path string, frag_path string) (ProgramId, error) {
 	gl.GetProgramiv(shader_program, gl.LINK_STATUS, &success)
 	if success == gl.FALSE {
 		var log_length int32
-		gl.GetShaderiv(shader_program, gl.INFO_LOG_LENGTH, &log_length)
+		gl.GetProgramiv(shader_program, gl.INFO_LOG_LENGTH, &log_length)
 		log := strings.Repeat("\x00", int(log_length+1))
 		gl.GetProgramInfoLog(shader_program, log_length, nil, gl.Str(log))
 		return 0, errors.New("failed to link sadly\n" + log)
@@ -99,6 +99,7 @@ func UnbindVertexArray() {
 func UseProgram(shader_program ProgramId) {
 	gl.UseProgram(uint32(shader_program))
 }
+
 func BindVertextArray(vaoID BufferId) {
 	gl.BindVertexArray(uint32(vaoID))
 }

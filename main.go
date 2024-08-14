@@ -6,6 +6,7 @@ import (
 
 	"github.com/barnabasSol/go_gl/helper"
 	"github.com/go-gl/gl/v3.3-core/gl"
+	"github.com/go-gl/mathgl/mgl32"
 	"github.com/veandco/go-sdl2/sdl"
 )
 
@@ -35,7 +36,6 @@ func main() {
 	if wind_err != nil {
 		panic(wind_err)
 	}
-
 	window.GLCreateContext()
 	defer window.Destroy()
 	gl.Init()
@@ -49,7 +49,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	tex_file_path := filepath.Join("assets", "wall.jpg")
+	tex_file_path := filepath.Join("assets", "gold.png")
 	texture := helper.LoadTextureAlpha(tex_file_path)
 
 	vertices := []float32{
@@ -96,10 +96,11 @@ func main() {
 		-0.5, 0.5, -0.5, 0.0, 1.0,
 	}
 
-	// indices := []uint32{
-	// 	0, 1, 3,
-	// 	1, 2, 3,
-	// }
+	cubePositions := []mgl32.Vec3{
+		{0.0, 0.0, 0.0},
+		{2.0, 5.0, -10.0},
+		{2.0, 5.0, -14.0},
+	}
 
 	helper.GenBindBuffer(gl.ARRAY_BUFFER, 1)
 	VAO := helper.GenBindVertexArray(1)
@@ -113,34 +114,38 @@ func main() {
 	gl.EnableVertexAttribArray(1)
 	helper.UnbindVertexArray()
 
-	var x float32 = 0.0
 	//for vertex shader
-	var xv float32 = 0.0
-	var yv float32 = 0.0
 
 	for {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 			switch event.(type) {
 			case *sdl.QuitEvent:
 				return
-				// case *sdl.KeyboardEvent:
 			}
-			gl.ClearColor(0.0, 0.0, 0.0, 0.0)
-			gl.Clear(gl.COLOR_BUFFER_BIT)
-			helper.HandleInput(&xv, &yv)
-			shader_program.Use()
-			shader_program.SetFloat("x", x)
-			shader_program.SetFloat("y", 0.0)
-			shader_program.SetFloat("xv", xv)
-			shader_program.SetFloat("yv", yv)
-			helper.BindTexture(texture)
-
-			helper.BindVertextArray(VAO)
-
-			gl.DrawArrays(gl.TRIANGLES, 0, 36)
-			window.GLSwap()
-			shader_program.CheckForShaderChanges()
-
 		}
+		gl.ClearColor(0.0, 0.0, 0.0, 0.0)
+		gl.Clear(gl.COLOR_BUFFER_BIT)
+		shader_program.Use()
+
+		projectionMatrix := mgl32.Perspective(mgl32.DegToRad(65.0), float32(winWidth)/float32(winHeight), 0.1, 100.0)
+		// viewMatrix := mgl32.Ident4()
+		viewMatrix := mgl32.Translate3D(0.0, 0.0, -3.0)
+		shader_program.SetMat4("projection", projectionMatrix)
+
+		shader_program.SetMat4("view", viewMatrix)
+
+		helper.BindTexture(texture)
+		helper.BindVertextArray(VAO)
+		for _, pos := range cubePositions {
+			modelMatrix := mgl32.Ident4()
+			modelMatrix = mgl32.Translate3D(pos.X(), pos.Y(), pos.Z()).Mul4(modelMatrix)
+			// var angle float32 = 20.0 * float32(i)
+			// modelMatrix = mgl32.HomogRotate3DY(mgl32.DegToRad(angle))
+			shader_program.SetMat4("model", modelMatrix)
+			gl.DrawArrays(gl.TRIANGLES, 0, 36)
+		}
+
+		window.GLSwap()
+		shader_program.CheckForShaderChanges()
 	}
 }
