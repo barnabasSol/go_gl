@@ -50,11 +50,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	tex_file_path := filepath.Join("assets", "land.jpeg")
-	texture := helper.LoadTextureAlpha(tex_file_path)
-	wall_tex_file_path := filepath.Join("assets", "wall.jpg")
-	wall_texture := helper.LoadTextureAlpha(wall_tex_file_path)
-	_ = wall_texture
+	grass_file_path := filepath.Join("assets", "land.jpeg")
+	grass_texture := helper.LoadTextureAlphaJpeg(grass_file_path)
+	gold_file_path := filepath.Join("assets", "gold.png")
+	gold_texture := helper.LoadTextureAlphaPng(gold_file_path)
 
 	var land objects.Land
 	var cube objects.Cube
@@ -62,7 +61,7 @@ func main() {
 	land.New()
 	cube.New()
 
-	// Land VAO and VBO
+	// Land
 	landVAO := helper.GenBindVertexArray(1)
 	helper.GenBindBuffer(gl.ARRAY_BUFFER, 1)
 	helper.BufferDataFloat(gl.ARRAY_BUFFER, land.Vertices, gl.STATIC_DRAW)
@@ -107,7 +106,7 @@ func main() {
 		shader_program.SetMat4("view", viewMatrix)
 
 		helper.BindVertextArray(landVAO)
-		helper.BindTexture(texture)
+		helper.BindTexture(grass_texture)
 		for _, pos := range land.Positions {
 			modelMatrix := mgl32.Ident4()
 			// var angle float32 = 60.0 * float32(i)
@@ -117,7 +116,7 @@ func main() {
 			gl.DrawArrays(gl.TRIANGLES, 0, int32(len(land.Vertices)/5))
 		}
 
-		helper.BindTexture(wall_texture)
+		helper.BindTexture(gold_texture)
 		helper.BindVertextArray(cubeVAO)
 		for _, pos := range cube.Positions {
 			modelMatrix := mgl32.Ident4()
@@ -130,9 +129,9 @@ func main() {
 		if cubeX > 4.0 {
 			cubeX = -4.0
 		}
-		cubeZ += .003
+		cubeZ += .006
 		if cubeZ > 4.0 {
-			cubeZ = -4.0
+			cubeZ = -7.0
 		}
 		cube.Positions[0] = mgl32.Vec3{cubeX, cube.Positions[0].Y(), cube.Positions[0].Z()}
 		cube.Positions[1] = mgl32.Vec3{cube.Positions[1].X(), cube.Positions[1].Y(), cubeZ}
