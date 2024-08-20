@@ -1,43 +1,47 @@
 package objects
 
-import "github.com/go-gl/mathgl/mgl32"
+import (
+	"github.com/barnabasSol/go_gl/helper"
+	"github.com/go-gl/gl/v3.3-core/gl"
+	"github.com/go-gl/mathgl/mgl32"
+)
 
 type Bullet struct {
+	IsFired   bool
+	ShotSpeed float32
 	Vertices  []float32
-	Positions []mgl32.Vec3
+	Position  mgl32.Vec3
+	VAO       helper.BufferId
+}
+
+type BulletInMotion struct {
+	PosX float32
+	PosY float32
+	PosZ float32
 }
 
 func (bullet *Bullet) New() {
-	// Bullet Vertices
-	// Bullet Vertices
+
+	bullet.IsFired = false
+	bullet.ShotSpeed = .2222
 	bullet.Vertices = []float32{
-		// Front face
-		-0.05, 0.2, 0.05, 0.0, 1.0, // 0. Top left
-		0.05, 0.2, 0.05, 1.0, 1.0, // 1. Top right
-		0.05, -0.2, 0.05, 1.0, 0.0, // 2. Bottom right
-		-0.05, -0.2, 0.05, 0.0, 0.0, // 3. Bottom left
-
-		// Back face
-		-0.05, 0.2, -0.05, 0.0, 1.0, // 4. Top left
-		0.05, 0.2, -0.05, 1.0, 1.0, // 5. Top right
-		0.05, -0.2, -0.05, 1.0, 0.0, // 6. Bottom right
-		-0.05, -0.2, -0.05, 0.0, 0.0, // 7. Bottom left
-
-		// Top face
-		-0.05, 0.2, 0.05, 0.0, 0.0, // 8. Top left
-		0.05, 0.2, 0.05, 1.0, 0.0, // 9. Top right
-		0.05, 0.2, -0.05, 1.0, 1.0, // 10. Top right
-		-0.05, 0.2, -0.05, 0.0, 1.0, // 11. Top left
-
-		// Bottom face
-		-0.05, -0.2, 0.05, 0.0, 0.0, // 12. Bottom left
-		0.05, -0.2, 0.05, 1.0, 0.0, // 13. Bottom right
-		0.05, -0.2, -0.05, 1.0, 1.0, // 14. Bottom right
-		-0.05, -0.2, -0.05, 0.0, 1.0, // 15. Bottom left
+		-0.5, 0.5, -0.5, 0.0, 1.0,
+		0.5, 0.5, -0.5, 1.0, 1.0,
+		0.5, 0.5, 0.5, 1.0, 0.0,
+		0.5, 0.5, 0.5, 1.0, 0.0,
+		-0.5, 0.5, 0.5, 0.0, 0.0,
+		-0.5, 0.5, -0.5, 0.0, 1.0,
 	}
 
-	bullet.Positions = []mgl32.Vec3{
-		{0.0, 0.0, -7.0},
-	}
+}
 
+func (bullet *Bullet) LoadVertexAttribs() {
+	bullet.VAO = helper.GenBindVertexArray(3)
+	helper.GenBindBuffer(gl.ARRAY_BUFFER, 1)
+	helper.BufferDataFloat(gl.ARRAY_BUFFER, bullet.Vertices, gl.STATIC_DRAW)
+	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 5*4, nil)
+	gl.EnableVertexAttribArray(0)
+	gl.VertexAttribPointerWithOffset(1, 2, gl.FLOAT, false, 5*4, 3*4)
+	gl.EnableVertexAttribArray(1)
+	helper.UnbindVertexArray()
 }

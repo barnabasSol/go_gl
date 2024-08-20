@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fmt"
 	"path/filepath"
+	"time"
 
+	"github.com/barnabasSol/go_gl/gamelogic"
 	"github.com/barnabasSol/go_gl/helper"
 	"github.com/barnabasSol/go_gl/objects"
 	"github.com/go-gl/gl/v3.3-core/gl"
@@ -13,6 +14,8 @@ import (
 
 const winWidth = 1280
 const winHeight = 730
+
+var keyStates = sdl.GetKeyboardState()
 
 func main() {
 	err := sdl.Init(sdl.INIT_EVERYTHING)
@@ -41,8 +44,6 @@ func main() {
 	gl.Init()
 	gl.Enable(gl.DEPTH_TEST)
 
-	fmt.Println(helper.GetVersion())
-
 	vertexShaderPath := filepath.Join("shaders", "first.vert")
 	fragmentShaderPath := filepath.Join("shaders", "quad_tex.frag")
 
@@ -50,92 +51,149 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	grass_file_path := filepath.Join("assets", "land.jpeg")
-	grass_texture := helper.LoadTextureAlphaJpeg(grass_file_path)
+	// land_file_path := filepath.Join("assets", "grass.jpg")
+	// land_texture := helper.LoadTextureAlphaJpeg(land_file_path)
 	gold_file_path := filepath.Join("assets", "gold.png")
 	gold_texture := helper.LoadTextureAlphaPng(gold_file_path)
 
+	world_up := mgl32.Vec3{0.0, 1.0, 0.0}
+	position := mgl32.Vec3{0.0, 0.4, 3.0}
+	camera := helper.NewCamera(position, world_up, -90, .0, 0.01, .4)
+
 	var land objects.Land
-	var cube objects.Cube
+	var enemy objects.Enemey
+	var player objects.Player
+	var bullet objects.Bullet
 
 	land.New()
-	cube.New()
+	enemy.New()
+	player.New()
+	bullet.New()
 
 	// Land
-	landVAO := helper.GenBindVertexArray(1)
-	helper.GenBindBuffer(gl.ARRAY_BUFFER, 1)
-	helper.BufferDataFloat(gl.ARRAY_BUFFER, land.Vertices, gl.STATIC_DRAW)
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 5*4, nil)
-	gl.EnableVertexAttribArray(0)
-	gl.VertexAttribPointerWithOffset(1, 2, gl.FLOAT, false, 5*4, 3*4)
-	gl.EnableVertexAttribArray(1)
-	helper.UnbindVertexArray()
+	land.LoadVertexAttribs()
 
-	// Cube VAO and VBO
-	cubeVAO := helper.GenBindVertexArray(2)
-	helper.GenBindBuffer(gl.ARRAY_BUFFER, 2)
-	helper.BufferDataFloat(gl.ARRAY_BUFFER, cube.Vertices, gl.STATIC_DRAW)
-	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 5*4, nil)
-	gl.EnableVertexAttribArray(0)
-	gl.VertexAttribPointerWithOffset(1, 2, gl.FLOAT, false, 5*4, 3*4)
-	gl.EnableVertexAttribArray(1)
-	helper.UnbindVertexArray()
+	// enemies
+	enemy.LoadVertexAttribs()
 
-	var (
-		x_pos float32 = 0
-		z_pos float32 = 0
-	)
-	cubeX := cube.Positions[0].X()
-	cubeZ := cube.Positions[1].Z()
+	// player
+	player.LoadVertexAttribs()
 
+	// bullet
+	bullet.LoadVertexAttribs()
+
+	var elapsedTime float32
+	bim := objects.BulletInMotion{
+		PosX: camera.Position.X(),
+		PosY: camera.Position.Y(),
+		PosZ: camera.Position.Z(),
+	}
+	prevMouseX, prevMouseY, _ := sdl.GetMouseState()
 	for {
+		frameStart := time.Now()
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 			switch event.(type) {
 			case *sdl.QuitEvent:
 				return
 			}
 		}
-		gl.ClearColor(0.0, 0.0, 0.0, 0.0)
+
+		if keyStates[sdl.SCANCODE_SPACE] != 0 {
+			bullet.IsFired = true
+		} else {
+			bullet.IsFired = false
+		}
+		mouseX, mouseY, _ := sdl.GetMouseState()
+
+		var direction helper.Direction = helper.Nowhere
+
+		if keyStates[sdl.SCANCODE_A] != 0 {
+			bim.PosX = camera.Position.X()
+			direction = helper.Left
+		}
+		if keyStates[sdl.SCANCODE_D] != 0 {
+			bim.PosX = camera.Position.X()
+			direction = helper.Right
+		}
+		if keyStates[sdl.SCANCODE_W] != 0 {
+			bim.PosZ = camera.Position.Z()
+			direction = helper.Forward
+		}
+		if keyStates[sdl.SCANCODE_S] != 0 {
+			bim.PosZ = camera.Position.Z()
+			direction = helper.Backward
+		}
+
+		if camera.Position.Y() <= 0.3 {
+			var newY float32 = 0.4
+			camera.Position = mgl32.Vec3{camera.Position.X(), newY, camera.Position.Z()}
+		}
+
+		camera.UpdateCamera(direction, elapsedTime, camera.MovementSpeed, float32(mouseX-prevMouseX), -float32(mouseY-prevMouseY))
+		prevMouseX = mouseX
+		prevMouseY = mouseY
+		gl.ClearColor(0.53, 0.81, 0.92, 1.0)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 		shader_program.Use()
 
 		projectionMatrix := mgl32.Perspective(mgl32.DegToRad(45.0), float32(winWidth)/float32(winHeight), 0.1, 200.0)
-		helper.HandleInput(&x_pos, &z_pos)
-		viewMatrix := mgl32.Translate3D(x_pos, 0.0, z_pos)
+		viewMatrix := camera.GetViewMatrix()
 		shader_program.SetMat4("projection", projectionMatrix)
 		shader_program.SetMat4("view", viewMatrix)
 
-		helper.BindVertextArray(landVAO)
-		helper.BindTexture(grass_texture)
-		for _, pos := range land.Positions {
-			modelMatrix := mgl32.Ident4()
-			// var angle float32 = 60.0 * float32(i)
-			// modelMatrix = mgl32.HomogRotate3D(mgl32.DegToRad(angle), mgl32.Vec3{1.0, 0.3, 0.5}).Mul4(modelMatrix)
-			modelMatrix = mgl32.Translate3D(pos.X(), pos.Y(), pos.Z()).Mul4(modelMatrix)
-			shader_program.SetMat4("model", modelMatrix)
-			gl.DrawArrays(gl.TRIANGLES, 0, int32(len(land.Vertices)/5))
-		}
+		//land------------------------------------------------
+		land.Renderer(shader_program)
+		//land------------------------------------------------
 
-		helper.BindTexture(gold_texture)
-		helper.BindVertextArray(cubeVAO)
-		for _, pos := range cube.Positions {
+		//enemy------------------------------------------------
+		enemy.Renderer(shader_program)
+		//enemy------------------------------------------------
+
+		//player------------------------------
+		{
+			helper.BindVertextArray(player.VAO)
+			helper.BindTexture(gold_texture)
 			modelMatrix := mgl32.Ident4()
-			modelMatrix = mgl32.Translate3D(pos.X(), pos.Y(), pos.Z()).Mul4(modelMatrix)
+			modelMatrix = mgl32.Translate3D(camera.Position.X(), camera.Position.Y()-.8, camera.Position.Z()).Mul4(modelMatrix)
 			shader_program.SetMat4("model", modelMatrix)
 			gl.DrawArrays(gl.TRIANGLES, 0, 36)
 		}
+		//player--------------------------------
 
-		cubeX += .003
-		if cubeX > 4.0 {
-			cubeX = -4.0
+		//bullet------------------------------
+		{
+			helper.BindVertextArray(bullet.VAO)
+			helper.BindTexture(gold_texture)
+
+			if bullet.IsFired {
+				bim.PosZ -= float32(bullet.ShotSpeed)
+				var firing_range float32 = -20
+				if bim.PosZ <= firing_range {
+					bim.PosZ = camera.Position.Z()
+					bullet.IsFired = false
+				}
+				modelMatrix := mgl32.Ident4()
+				modelMatrix = mgl32.Translate3D(bim.PosX, camera.Position.Y(), bim.PosZ).Mul4(modelMatrix)
+				shader_program.SetMat4("model", modelMatrix)
+			} else {
+				bim.PosZ = camera.Position.Z()
+				modelMatrix := mgl32.Ident4()
+				modelMatrix = mgl32.Translate3D(camera.Position.X(), camera.Position.Y()-.4, camera.Position.Z()).Mul4(modelMatrix)
+				shader_program.SetMat4("model", modelMatrix)
+			}
+
+			gl.DrawArrays(gl.TRIANGLES, 0, int32(len(land.Vertices)/5))
 		}
-		cubeZ += .006
-		if cubeZ > 4.0 {
-			cubeZ = -7.0
+		//bullet------------------------------
+
+		enemy_index, err := gamelogic.HitEnemyIndex(camera, &bim, &enemy.Positions)
+		if err == nil {
+			gamelogic.KillEnemy(enemy_index, &enemy.Positions)
+			println(enemy_index)
 		}
-		cube.Positions[0] = mgl32.Vec3{cubeX, cube.Positions[0].Y(), cube.Positions[0].Z()}
-		cube.Positions[1] = mgl32.Vec3{cube.Positions[1].X(), cube.Positions[1].Y(), cubeZ}
+
 		window.GLSwap()
 		shader_program.CheckForShaderChanges()
+		elapsedTime = float32(time.Since(frameStart).Seconds() * 1000)
 	}
 }
