@@ -1,5 +1,3 @@
 package main
 
-func InitBoilerPlate() {
-
-}
+func InitBoilerPlate() {}

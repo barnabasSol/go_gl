@@ -6,7 +6,7 @@ import (
 	"github.com/go-gl/mathgl/mgl32"
 )
 
-type Direction int
+type Direction uint8
 
 const (
 	Forward Direction = iota

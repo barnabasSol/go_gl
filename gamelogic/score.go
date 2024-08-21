@@ -1,0 +1,3 @@
+package gamelogic
+
+func HandleScore() {}

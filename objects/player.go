@@ -13,8 +13,7 @@ type Player struct {
 }
 
 func (bullet *Player) New() {
-	// Bullet Vertices
-	// Bullet Vertices
+
 	bullet.Vertices = []float32{
 		// Cylinder sides
 		// Bottom face
@@ -84,6 +83,4 @@ func (player *Player) LoadVertexAttribs() {
 	helper.UnbindVertexArray()
 }
 
-func (player *Player) Renderer() {
-
-}
+func (player *Player) Renderer() {}

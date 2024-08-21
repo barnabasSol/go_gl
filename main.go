@@ -51,13 +51,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	// land_file_path := filepath.Join("assets", "grass.jpg")
-	// land_texture := helper.LoadTextureAlphaJpeg(land_file_path)
+
 	gold_file_path := filepath.Join("assets", "gold.png")
 	gold_texture := helper.LoadTextureAlphaPng(gold_file_path)
 
 	world_up := mgl32.Vec3{0.0, 1.0, 0.0}
-	position := mgl32.Vec3{0.0, 0.4, 3.0}
+	position := mgl32.Vec3{0.0, 0.2, 3.0}
 	camera := helper.NewCamera(position, world_up, -90, .0, 0.01, .4)
 
 	var land objects.Land
@@ -70,19 +69,13 @@ func main() {
 	player.New()
 	bullet.New()
 
-	// Land
 	land.LoadVertexAttribs()
-
-	// enemies
 	enemy.LoadVertexAttribs()
-
-	// player
 	player.LoadVertexAttribs()
-
-	// bullet
 	bullet.LoadVertexAttribs()
 
 	var elapsedTime float32
+
 	bim := objects.BulletInMotion{
 		PosX: camera.Position.X(),
 		PosY: camera.Position.Y(),
@@ -141,13 +134,9 @@ func main() {
 		shader_program.SetMat4("projection", projectionMatrix)
 		shader_program.SetMat4("view", viewMatrix)
 
-		//land------------------------------------------------
 		land.Renderer(shader_program)
-		//land------------------------------------------------
 
-		//enemy------------------------------------------------
 		enemy.Renderer(shader_program)
-		//enemy------------------------------------------------
 
 		//player------------------------------
 		{
@@ -181,7 +170,6 @@ func main() {
 				modelMatrix = mgl32.Translate3D(camera.Position.X(), camera.Position.Y()-.4, camera.Position.Z()).Mul4(modelMatrix)
 				shader_program.SetMat4("model", modelMatrix)
 			}
-
 			gl.DrawArrays(gl.TRIANGLES, 0, int32(len(land.Vertices)/5))
 		}
 		//bullet------------------------------
