@@ -39,8 +39,10 @@ func main() {
 	if wind_err != nil {
 		panic(wind_err)
 	}
+
 	window.GLCreateContext()
 	defer window.Destroy()
+
 	gl.Init()
 	gl.Enable(gl.DEPTH_TEST)
 
@@ -51,9 +53,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-	gold_file_path := filepath.Join("assets", "gold.png")
-	gold_texture := helper.LoadTextureAlphaPng(gold_file_path)
 
 	world_up := mgl32.Vec3{0.0, 1.0, 0.0}
 	position := mgl32.Vec3{0.0, 0.2, 3.0}
@@ -75,7 +74,8 @@ func main() {
 	bullet.LoadVertexAttribs()
 
 	var elapsedTime float32
-
+	popped_enemies := make(objects.PoppedEnemies, 0)
+	_ = popped_enemies
 	bim := objects.BulletInMotion{
 		PosX: camera.Position.X(),
 		PosY: camera.Position.Y(),
@@ -137,49 +137,16 @@ func main() {
 		land.Renderer(shader_program)
 
 		enemy.Renderer(shader_program)
+		gamelogic.MoveEnemies(&enemy.Extra, 0.01111)
 
-		//player------------------------------
-		{
-			helper.BindVertextArray(player.VAO)
-			helper.BindTexture(gold_texture)
-			modelMatrix := mgl32.Ident4()
-			modelMatrix = mgl32.Translate3D(camera.Position.X(), camera.Position.Y()-.8, camera.Position.Z()).Mul4(modelMatrix)
-			shader_program.SetMat4("model", modelMatrix)
-			gl.DrawArrays(gl.TRIANGLES, 0, 36)
-		}
-		//player--------------------------------
+		player.Renderer(camera, shader_program)
 
-		//bullet------------------------------
-		{
-			helper.BindVertextArray(bullet.VAO)
-			helper.BindTexture(gold_texture)
+		bullet.Renderer(camera, shader_program, &bim)
 
-			if bullet.IsFired {
-				bim.PosZ -= float32(bullet.ShotSpeed)
-				var firing_range float32 = -20
-				if bim.PosZ <= firing_range {
-					bim.PosZ = camera.Position.Z()
-					bullet.IsFired = false
-				}
-				modelMatrix := mgl32.Ident4()
-				modelMatrix = mgl32.Translate3D(bim.PosX, camera.Position.Y(), bim.PosZ).Mul4(modelMatrix)
-				shader_program.SetMat4("model", modelMatrix)
-			} else {
-				bim.PosZ = camera.Position.Z()
-				modelMatrix := mgl32.Ident4()
-				modelMatrix = mgl32.Translate3D(camera.Position.X(), camera.Position.Y()-.4, camera.Position.Z()).Mul4(modelMatrix)
-				shader_program.SetMat4("model", modelMatrix)
-			}
-			gl.DrawArrays(gl.TRIANGLES, 0, int32(len(land.Vertices)/5))
-		}
-		//bullet------------------------------
-
-		enemy_index, err := gamelogic.HitEnemyIndex(camera, &bim, &enemy.Positions)
+		hit_enemy, err := gamelogic.HitEnemyId(camera, &bim, &enemy.Extra)
 		if err == nil {
-			gamelogic.KillEnemy(enemy_index, &enemy.Positions)
-			println(enemy_index)
+			gamelogic.KillEnemy(&hit_enemy, &enemy.Extra)
 		}
-
 		window.GLSwap()
 		shader_program.CheckForShaderChanges()
 		elapsedTime = float32(time.Since(frameStart).Seconds() * 1000)

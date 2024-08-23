@@ -1,12 +1,15 @@
 package objects
 
 import (
+	"path/filepath"
+
 	"github.com/barnabasSol/go_gl/helper"
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 )
 
 type Bullet struct {
+	texture   helper.TextureId
 	IsFired   bool
 	ShotSpeed float32
 	Vertices  []float32
@@ -21,6 +24,9 @@ type BulletInMotion struct {
 }
 
 func (bullet *Bullet) New() {
+
+	gold_file_path := filepath.Join("assets", "gold.png")
+	bullet.texture = helper.LoadTextureAlphaPng(gold_file_path)
 
 	bullet.IsFired = false
 	bullet.ShotSpeed = .2222
@@ -44,4 +50,27 @@ func (bullet *Bullet) LoadVertexAttribs() {
 	gl.VertexAttribPointerWithOffset(1, 2, gl.FLOAT, false, 5*4, 3*4)
 	gl.EnableVertexAttribArray(1)
 	helper.UnbindVertexArray()
+}
+
+func (bullet *Bullet) Renderer(camera *helper.Camera, shader_program *helper.Shader, bim *BulletInMotion) {
+	helper.BindVertextArray(bullet.VAO)
+	helper.BindTexture(bullet.texture)
+
+	if bullet.IsFired {
+		bim.PosZ -= float32(bullet.ShotSpeed)
+		var firing_range float32 = -20
+		if bim.PosZ <= firing_range {
+			bim.PosZ = camera.Position.Z()
+			bullet.IsFired = false
+		}
+		modelMatrix := mgl32.Ident4()
+		modelMatrix = mgl32.Translate3D(bim.PosX, camera.Position.Y(), bim.PosZ).Mul4(modelMatrix)
+		shader_program.SetMat4("model", modelMatrix)
+	} else {
+		bim.PosZ = camera.Position.Z()
+		modelMatrix := mgl32.Ident4()
+		modelMatrix = mgl32.Translate3D(camera.Position.X(), camera.Position.Y()-.4, camera.Position.Z()).Mul4(modelMatrix)
+		shader_program.SetMat4("model", modelMatrix)
+	}
+	gl.DrawArrays(gl.TRIANGLES, 0, int32(len(bullet.Vertices)/5))
 }

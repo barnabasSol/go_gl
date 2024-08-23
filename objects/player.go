@@ -1,20 +1,26 @@
 package objects
 
 import (
+	"path/filepath"
+
 	"github.com/barnabasSol/go_gl/helper"
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
 )
 
 type Player struct {
+	texture   helper.TextureId
 	Vertices  []float32
 	Positions []mgl32.Vec3
 	VAO       helper.BufferId
 }
 
-func (bullet *Player) New() {
+func (player *Player) New() {
 
-	bullet.Vertices = []float32{
+	var gold_file_path string = filepath.Join("assets", "gold.png")
+	player.texture = helper.LoadTextureAlphaPng(gold_file_path)
+
+	player.Vertices = []float32{
 		// Cylinder sides
 		// Bottom face
 		-0.5, -0.5, -0.5, 0.0, 1.0, // Bottom left back
@@ -66,7 +72,7 @@ func (bullet *Player) New() {
 		0.5, 0.5, -0.5, 0.0, 0.0, // Top right back
 	}
 
-	bullet.Positions = []mgl32.Vec3{
+	player.Positions = []mgl32.Vec3{
 		{0.0, 0.7, -7.0},
 	}
 
@@ -83,4 +89,11 @@ func (player *Player) LoadVertexAttribs() {
 	helper.UnbindVertexArray()
 }
 
-func (player *Player) Renderer() {}
+func (player *Player) Renderer(camera *helper.Camera, shader_program *helper.Shader) {
+	helper.BindVertextArray(player.VAO)
+	helper.BindTexture(player.texture)
+	modelMatrix := mgl32.Ident4()
+	modelMatrix = mgl32.Translate3D(camera.Position.X(), camera.Position.Y()-.8, camera.Position.Z()).Mul4(modelMatrix)
+	shader_program.SetMat4("model", modelMatrix)
+	gl.DrawArrays(gl.TRIANGLES, 0, 36)
+}

@@ -10,14 +10,17 @@ import (
 
 type PoppedEnemies []mgl32.Vec3
 
-type EnemeyInMotion struct {
+type ExtrProperty struct {
+	Id       uint32
+	Position mgl32.Vec3
+	IsHit    bool
 }
 
 type Enemey struct {
 	ModelMatrix   mgl32.Mat4
 	textures      []helper.TextureId
 	Vertices      []float32
-	Positions     []mgl32.Vec3
+	Extra         []ExtrProperty
 	VAO           helper.BufferId
 	MovementSpeed float32
 }
@@ -29,6 +32,7 @@ func (enemy *Enemey) New() {
 	white_texture := helper.LoadTextureAlphaJpeg(white_file_path)
 
 	enemy.textures = []helper.TextureId{green_texture, white_texture}
+
 	enemy.Vertices = []float32{
 		-0.5, -0.5, -0.5, 0.0, 0.0,
 		0.5, -0.5, -0.5, 1.0, 0.0,
@@ -72,16 +76,23 @@ func (enemy *Enemey) New() {
 		-0.5, 0.5, 0.5, 0.0, 0.0,
 		-0.5, 0.5, -0.5, 0.0, 1.0,
 	}
-	enemy.Positions = []mgl32.Vec3{
-		{-4.0, 0.6, -7.0},
-		{1.0, 0.6, -7.0},
-		{4.0, 0.6, -7.0},
-		{8.0, 0.6, -7.0},
-		{-4.0, 0.6, -10.0},
-		{1.0, 0.6, -10.0},
-		{4.0, 0.6, -10.0},
-		{8.0, 0.6, -10.0},
+	enemy.Extra = []ExtrProperty{
+		{Id: 1, IsHit: false, Position: mgl32.Vec3{-4.0, 0.6, -7.0}},
+		{Id: 2, IsHit: false, Position: mgl32.Vec3{1.0, 0.6, -7.0}},
+		{Id: 3, IsHit: false, Position: mgl32.Vec3{4.0, 0.6, -7.0}},
+		{Id: 4, IsHit: false, Position: mgl32.Vec3{8.0, 0.6, -7.0}},
 	}
+
+	// enemy.Positions = []mgl32.Vec3{
+	// 	{-4.0, 0.6, -7.0},
+	// 	{1.0, 0.6, -7.0},
+	// 	{4.0, 0.6, -7.0},
+	// 	{8.0, 0.6, -7.0},
+	// 	{-4.0, 0.6, -10.0},
+	// 	{1.0, 0.6, -10.0},
+	// 	{4.0, 0.6, -10.0},
+	// 	{8.0, 0.6, -10.0},
+	// }
 
 }
 
@@ -101,7 +112,7 @@ var angle float32 = 0
 
 func (enemy *Enemey) Renderer(shader_program *helper.Shader) {
 	helper.BindVertextArray(enemy.VAO)
-	for i, pos := range enemy.Positions {
+	for i, prop := range enemy.Extra {
 		if i%2 == 0 {
 			helper.BindTexture(enemy.textures[0])
 		} else {
@@ -110,7 +121,7 @@ func (enemy *Enemey) Renderer(shader_program *helper.Shader) {
 		angle += increment
 		enemy.ModelMatrix = mgl32.Ident4()
 		enemy.ModelMatrix = mgl32.HomogRotate3DX(mgl32.DegToRad(angle)).Mul4(enemy.ModelMatrix)
-		enemy.ModelMatrix = mgl32.Translate3D(pos.X(), pos.Y(), pos.Z()).Mul4(enemy.ModelMatrix)
+		enemy.ModelMatrix = mgl32.Translate3D(prop.Position.X(), prop.Position.Y(), prop.Position.Z()).Mul4(enemy.ModelMatrix)
 		shader_program.SetMat4("model", enemy.ModelMatrix)
 		gl.DrawArrays(gl.TRIANGLES, 0, 36)
 	}
