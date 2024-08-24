@@ -28,6 +28,8 @@ func main() {
 	sdl.GLSetAttribute(sdl.GL_CONTEXT_MAJOR_VERSION, 3)
 	sdl.GLSetAttribute(sdl.GL_CONTEXT_MINOR_VERSION, 3)
 
+	scoreTrack := gamelogic.NewScore(0, 0)
+
 	window, wind_err := sdl.CreateWindow(
 		"Hello GoGl",
 		50,
@@ -55,7 +57,7 @@ func main() {
 	}
 
 	world_up := mgl32.Vec3{0.0, 1.0, 0.0}
-	position := mgl32.Vec3{0.0, 0.2, 3.0}
+	position := mgl32.Vec3{0.0, 0.0, 3.0}
 	camera := helper.NewCamera(position, world_up, -90, .0, 0.01, .4)
 
 	var land objects.Land
@@ -74,8 +76,7 @@ func main() {
 	bullet.LoadVertexAttribs()
 
 	var elapsedTime float32
-	popped_enemies := make(objects.PoppedEnemies, 0)
-	_ = popped_enemies
+	var enemySpeed float32 = 0.01111
 	bim := objects.BulletInMotion{
 		PosX: camera.Position.X(),
 		PosY: camera.Position.Y(),
@@ -87,6 +88,7 @@ func main() {
 		for event := sdl.PollEvent(); event != nil; event = sdl.PollEvent() {
 			switch event.(type) {
 			case *sdl.QuitEvent:
+				gamelogic.PrintGameStats(scoreTrack)
 				return
 			}
 		}
@@ -96,6 +98,7 @@ func main() {
 		} else {
 			bullet.IsFired = false
 		}
+
 		mouseX, mouseY, _ := sdl.GetMouseState()
 
 		var direction helper.Direction = helper.Nowhere
@@ -122,9 +125,17 @@ func main() {
 			camera.Position = mgl32.Vec3{camera.Position.X(), newY, camera.Position.Z()}
 		}
 
-		camera.UpdateCamera(direction, elapsedTime, camera.MovementSpeed, float32(mouseX-prevMouseX), -float32(mouseY-prevMouseY))
+		camera.UpdateCamera(
+			direction,
+			elapsedTime,
+			camera.MovementSpeed,
+			float32(mouseX-prevMouseX),
+			-float32(mouseY-prevMouseY),
+		)
+
 		prevMouseX = mouseX
 		prevMouseY = mouseY
+
 		gl.ClearColor(0.53, 0.81, 0.92, 1.0)
 		gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 		shader_program.Use()
@@ -137,16 +148,22 @@ func main() {
 		land.Renderer(shader_program)
 
 		enemy.Renderer(shader_program)
-		gamelogic.MoveEnemies(&enemy.Extra, 0.01111)
+
+		gamelogic.MoveEnemies(&enemy.Extras, &enemySpeed)
+		if gamelogic.AllEnemiesAreHit(&enemy.Extras) || len(enemy.Extras) < 1 {
+			println("omgg all enemies are hit")
+			gamelogic.LevelUp(scoreTrack, &enemySpeed, &enemy.Extras)
+		}
 
 		player.Renderer(camera, shader_program)
 
 		bullet.Renderer(camera, shader_program, &bim)
 
-		hit_enemy, err := gamelogic.HitEnemyId(camera, &bim, &enemy.Extra)
+		hit_enemy, err := gamelogic.GetHitEnemy(camera, &bim, &enemy.Extras)
 		if err == nil {
-			gamelogic.KillEnemy(&hit_enemy, &enemy.Extra)
+			gamelogic.KillEnemy(&hit_enemy, &enemy.Extras, scoreTrack)
 		}
+		gamelogic.HandlePassedEnemies(&enemy.Extras, camera, scoreTrack)
 		window.GLSwap()
 		shader_program.CheckForShaderChanges()
 		elapsedTime = float32(time.Since(frameStart).Seconds() * 1000)

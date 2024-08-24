@@ -10,17 +10,18 @@ import (
 
 type PoppedEnemies []mgl32.Vec3
 
-type ExtrProperty struct {
-	Id       uint32
-	Position mgl32.Vec3
-	IsHit    bool
+type ExtraEnemyProperty struct {
+	Id               uint32
+	Position         mgl32.Vec3
+	IsHit            bool
+	HavePassedPlayer bool
 }
 
 type Enemey struct {
 	ModelMatrix   mgl32.Mat4
 	textures      []helper.TextureId
 	Vertices      []float32
-	Extra         []ExtrProperty
+	Extras        []ExtraEnemyProperty
 	VAO           helper.BufferId
 	MovementSpeed float32
 }
@@ -76,11 +77,11 @@ func (enemy *Enemey) New() {
 		-0.5, 0.5, 0.5, 0.0, 0.0,
 		-0.5, 0.5, -0.5, 0.0, 1.0,
 	}
-	enemy.Extra = []ExtrProperty{
-		{Id: 1, IsHit: false, Position: mgl32.Vec3{-4.0, 0.6, -7.0}},
-		{Id: 2, IsHit: false, Position: mgl32.Vec3{1.0, 0.6, -7.0}},
-		{Id: 3, IsHit: false, Position: mgl32.Vec3{4.0, 0.6, -7.0}},
-		{Id: 4, IsHit: false, Position: mgl32.Vec3{8.0, 0.6, -7.0}},
+	enemy.Extras = []ExtraEnemyProperty{
+		{Id: 1, IsHit: false, Position: mgl32.Vec3{-4.0, 0.6, -14.0}, HavePassedPlayer: false},
+		{Id: 2, IsHit: false, Position: mgl32.Vec3{1.0, 0.6, -14.0}, HavePassedPlayer: false},
+		{Id: 3, IsHit: false, Position: mgl32.Vec3{4.0, 0.6, -14.0}, HavePassedPlayer: false},
+		{Id: 4, IsHit: false, Position: mgl32.Vec3{8.0, 0.6, -14.0}, HavePassedPlayer: false},
 	}
 
 	// enemy.Positions = []mgl32.Vec3{
@@ -93,7 +94,6 @@ func (enemy *Enemey) New() {
 	// 	{4.0, 0.6, -10.0},
 	// 	{8.0, 0.6, -10.0},
 	// }
-
 }
 
 func (enemy *Enemey) LoadVertexAttribs() {
@@ -112,7 +112,7 @@ var angle float32 = 0
 
 func (enemy *Enemey) Renderer(shader_program *helper.Shader) {
 	helper.BindVertextArray(enemy.VAO)
-	for i, prop := range enemy.Extra {
+	for i, prop := range enemy.Extras {
 		if i%2 == 0 {
 			helper.BindTexture(enemy.textures[0])
 		} else {

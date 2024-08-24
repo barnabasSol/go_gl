@@ -27,10 +27,10 @@ func (land *Land) New() {
 		-0.5, 0.5, -0.5, 0.0, 1.0,
 	}
 
-	land.Positions = make([]mgl32.Vec3, 0, 60*60)
+	land.Positions = make([]mgl32.Vec3, 0, 100*100)
 
-	for x := -30; x <= 30; x++ {
-		for z := -30; z <= 30; z++ {
+	for x := -50; x <= 50; x++ {
+		for z := -50; z <= 50; z++ {
 			land.Positions = append(
 				land.Positions,
 				mgl32.Vec3{float32(x), -0.8, float32(z)},
@@ -42,7 +42,7 @@ func (land *Land) New() {
 func (land *Land) LoadVertexAttribs() {
 	land.VAO = helper.GenBindVertexArray(1)
 	helper.GenBindBuffer(gl.ARRAY_BUFFER, 1)
-	helper.BufferDataFloat(gl.ARRAY_BUFFER, land.Vertices, gl.STATIC_DRAW)
+	helper.BufferDataFloat(gl.ARRAY_BUFFER, land.Vertices, gl.DYNAMIC_DRAW)
 	gl.VertexAttribPointer(0, 3, gl.FLOAT, false, 5*4, nil)
 	gl.EnableVertexAttribArray(0)
 	gl.VertexAttribPointerWithOffset(1, 2, gl.FLOAT, false, 5*4, 3*4)

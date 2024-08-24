@@ -21,8 +21,6 @@ func (player *Player) New() {
 	player.texture = helper.LoadTextureAlphaPng(gold_file_path)
 
 	player.Vertices = []float32{
-		// Cylinder sides
-		// Bottom face
 		-0.5, -0.5, -0.5, 0.0, 1.0, // Bottom left back
 		0.5, -0.5, -0.5, 1.0, 1.0, // Bottom right back
 		0.5, -0.5, 0.5, 1.0, 0.0, // Bottom right front
@@ -30,7 +28,6 @@ func (player *Player) New() {
 		-0.5, -0.5, 0.5, 0.0, 0.0, // Bottom left front
 		-0.5, -0.5, -0.5, 0.0, 1.0, // Bottom left back
 
-		// Top face
 		-0.5, 0.5, -0.5, 0.0, 1.0, // Top left back
 		0.5, 0.5, -0.5, 1.0, 1.0, // Top right back
 		0.5, 0.5, 0.5, 1.0, 0.0, // Top right front
@@ -38,8 +35,6 @@ func (player *Player) New() {
 		-0.5, 0.5, 0.5, 0.0, 0.0, // Top left front
 		-0.5, 0.5, -0.5, 0.0, 1.0, // Top left back
 
-		// Cylinder sides
-		// Front face (with texture coordinates)
 		-0.5, 0.5, 0.5, 0.0, 0.0, // Top left front
 		0.5, 0.5, 0.5, 1.0, 0.0, // Top right front
 		0.5, -0.5, 0.5, 1.0, 1.0, // Bottom right front
@@ -47,7 +42,6 @@ func (player *Player) New() {
 		-0.5, -0.5, 0.5, 0.0, 1.0, // Bottom left front
 		-0.5, 0.5, 0.5, 0.0, 0.0, // Top left front
 
-		// Back face
 		-0.5, 0.5, -0.5, 0.0, 0.0, // Top left back
 		0.5, 0.5, -0.5, 1.0, 0.0, // Top right back
 		0.5, -0.5, -0.5, 1.0, 1.0, // Bottom right back
@@ -55,7 +49,6 @@ func (player *Player) New() {
 		-0.5, -0.5, -0.5, 0.0, 1.0, // Bottom left back
 		-0.5, 0.5, -0.5, 0.0, 0.0, // Top left back
 
-		// Left face
 		-0.5, 0.5, -0.5, 0.0, 0.0, // Top left back
 		-0.5, 0.5, 0.5, 1.0, 0.0, // Top left front
 		-0.5, -0.5, 0.5, 1.0, 1.0, // Bottom left front
@@ -63,7 +56,6 @@ func (player *Player) New() {
 		-0.5, -0.5, -0.5, 0.0, 1.0, // Bottom left back
 		-0.5, 0.5, -0.5, 0.0, 0.0, // Top left back
 
-		// Right face
 		0.5, 0.5, -0.5, 0.0, 0.0, // Top right back
 		0.5, 0.5, 0.5, 1.0, 0.0, // Top right front
 		0.5, -0.5, 0.5, 1.0, 1.0, // Bottom right front
